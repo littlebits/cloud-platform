@@ -1,26 +1,39 @@
 import json
 import logging
-from websocket_monitor import WebsocketMonitor
+import thread
+import websocket
+from time import sleep
 
 
 ACCESS_TOKEN = "ENTER_YOUR_ACCESS_TOKEN_HERE"
 DEVICE_ID = "ENTER_YOUR_DEVICE_ID_HERE"
 
-def on_message(message):
+connected = False
+
+def on_message(ws, message):
     obj = json.loads(message)
     print obj
 
-def on_state_change(connected):
-    if connected:
-        print "Connected to websocket"
-        msg = '{"name":"subscribe", "args":{"device_id":"%s"}}' % DEVICE_ID
-        mon.ws.send(msg)
-    else:
-        print "Disconnected from websocket"
+def on_error(ws, error):
+    print "Error: "+str(error)
 
-logging.basicConfig(level=logging.INFO)
-mon = WebsocketMonitor(ACCESS_TOKEN, on_message=on_message,
-        on_state_change=on_state_change)
-mon.connect()
-_ = raw_input("Press enter to quit\n")
-mon.disconnect()
+def on_close(ws):
+    print "Disconnected from websocket!"
+    connected = False
+
+def on_open(ws):
+    print "Connected to websocket"
+    msg = '{"name":"subscribe", "args":{"device_id":"%s"}}' % DEVICE_ID
+    ws.send(msg)
+    connected = True
+
+ws = websocket.WebSocketApp(
+    "wss://api-stream.littlebitscloud.cc/primus/?access_token=%s" % ACCESS_TOKEN,
+    on_message = on_message, on_error = on_error,
+    on_close = on_close, on_open = on_open)
+thread.start_new_thread(ws.run_forever, ())
+print "Listening: Press Control-C to exit"
+while(True):
+    if connected:
+        ws.send("Hi")
+    sleep(10.0)
