@@ -2,14 +2,12 @@ import json
 import thread
 import websocket
 from time import sleep
-from HTMLParser import HTMLParser
 
 
 ACCESS_TOKEN = "ENTER_YOUR_ACCESS_TOKEN_HERE"
 DEVICE_ID = "ENTER_YOUR_DEVICE_ID_HERE"
 
 connected = False
-last_message = None
 
 def on_message(ws, message):
     # Data returned is a JSON string wrapped in a string literal
