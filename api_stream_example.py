@@ -1,18 +1,32 @@
 import json
-import logging
 import thread
 import websocket
 from time import sleep
+from HTMLParser import HTMLParser
 
 
 ACCESS_TOKEN = "ENTER_YOUR_ACCESS_TOKEN_HERE"
 DEVICE_ID = "ENTER_YOUR_DEVICE_ID_HERE"
 
 connected = False
+last_message = None
 
 def on_message(ws, message):
-    obj = json.loads(message)
-    print obj
+    # Data returned is a JSON string wrapped in a string literal
+    obj = json.loads(json.loads(message))
+    if obj['type'] == 'connection_change':
+        if obj['state'] == 0:
+            print "Device %s is offline" % obj['from']['device']['id']
+        elif obj['state'] == 1:
+            print "Device %s connection is unsteady" % obj['from']['device']['id']
+        elif obj['state'] == 2:
+            print "Device %s is online" % obj['from']['device']['id']
+    elif obj['type'] == 'output':
+        print "Device %s: output %s %s" % (obj['from']['device']['id'],
+            obj['name'], obj['payload'])
+    elif obj['type'] == 'input':
+        print "Device %s: input %s %s" % (obj['from']['device']['id'],
+            obj['name'], obj['payload'])
 
 def on_error(ws, error):
     print "Error: "+str(error)
